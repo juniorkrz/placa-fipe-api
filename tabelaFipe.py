@@ -1,18 +1,51 @@
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 from string import ascii_lowercase
-from cloudscraper import create_scraper as cloud_scrapper
+from requests import get as requests_get
+from urllib.parse import urlencode as urllib_url_encode
 
 
 class TabelaFipe():
 
 
+    ESTADOS = {
+        "AC": "ACRE",
+        "AL": "ALAGOAS",
+        "AP": "AMAPÁ",
+        "AM": "AMAZONAS",
+        "BA": "BAHIA",
+        "CE": "CEARÁ",
+        "DF": "DISTRITO FEDERAL",
+        "ES": "ESPÍRITO SANTO",
+        "GO": "GOIÁS",
+        "MA": "MARANHÃO",
+        "MT": "MATO GROSSO",
+        "MS": "MATO GROSSO DO SUL",
+        "MG": "MINAS GERAIS",
+        "PA": "PARÁ",
+        "PB": "PARAÍBA",
+        "PR": "PARANÁ",
+        "PE": "PERNAMBUCO",
+        "PI": "PIAUÍ",
+        "RJ": "RIO DE JANEIRO",
+        "RN": "RIO GRANDE DO NORTE",
+        "RS": "RIO GRANDE DO SUL",
+        "RO": "RONDÔNIA",
+        "RR": "RORAIMA",
+        "SC": "SANTA CATARINA",
+        "SP": "SÃO PAULO",
+        "SE": "SERGIPE",
+        "TO": "TOCANTINS"
+    }
+
+
     def __init__(self) -> None:
-        self.scraper = cloud_scrapper()
+        self.__sa_token = 'SEU_TOKEN_AQUI' # Consiga o seu em https://scrapingant.com/ (1.000 consultas gratuitas por mês).
+        self.__sa_api_url = 'https://api.scrapingant.com/v2/general'
         self.__placa_fipe_url = "https://placafipe.com/placa/%s"
 
 
-    def __prepararConsulta(self, placa):
+    def __preparar_consulta(self, placa):
         self.__soup = None
         self.__placa = placa
         self.__html = None
@@ -22,20 +55,23 @@ class TabelaFipe():
                         }
 
 
-    def __obterPlacaFipeHtml(self):
-        resposta = self.scraper.get(self.__placa_fipe_url % self.__placa)
+    def __obter_placa_fipe_html(self):
+        fipe_url = self.__placa_fipe_url % self.__placa
+        params = {'url': fipe_url, 'x-api-key': self.__sa_token}
+        url = f'{self.__sa_api_url}?{urllib_url_encode(params)}'
+        resposta = requests_get(url)
         if resposta.status_code != 200:
             return False
         self.__html = resposta.text
         return True
 
 
-    def __obterSoup(self):
+    def __obter_soup(self):
         self.__soup = BeautifulSoup(self.__html, "html.parser")
         return True
 
 
-    def __obterLogoUrl(self):
+    def __obter_logo_url(self):
         logo = self.__soup.find("img", {"class": "fipeLogoDIV"})
         if logo:
             logo = logo.attrs["data-src"]
@@ -45,7 +81,7 @@ class TabelaFipe():
         return False
 
 
-    def __obterDetalhes(self):
+    def __obter_detalhes(self):
         tabela_detalhes = self.__soup.find("table", {"class": "fipeTablePriceDetail"})
         linhas_tabela = tabela_detalhes.find_all("tr")
 
@@ -56,7 +92,7 @@ class TabelaFipe():
         return True
 
 
-    def __corrigirParametros(self):
+    def __tratar_parametros(self):
         importado = self.__consulta["detalhes"].get("importado")
         if importado:
             if importado == "Sim":
@@ -72,18 +108,18 @@ class TabelaFipe():
                 self.__consulta["detalhes"][p] = int(self.__consulta["detalhes"][p])
 
 
-    def __obterVeiculosRegistrados(self, texto):
+    def __obter_veiculos_registrados(self, texto):
         try:
             return float(texto.split("registrados ")[1].split(" ")[0])
         except:
             return False
 
 
-    def __obterTipoVeiculo(self, texto):
+    def __obter_tipo_veiculo(self, texto):
         return texto.split(" ")[2].strip().lower()
 
 
-    def __obterOrgaoEmissor(self, texto):
+    def __obter_orgao_emissor(self, texto):
         orgao_emissor = texto.split("pelo ")
         if len(orgao_emissor) > 1:
             orgao_emissor = orgao_emissor[1].replace(".", "").upper()
@@ -91,11 +127,11 @@ class TabelaFipe():
         return False
 
 
-    def __obterDataTabelaFipe(self, texto):
+    def __obter_data_tabela_fipe(self, texto):
         return texto.split("fipe de ")[1].split(",")[0].strip().capitalize()
 
 
-    def __tratarTabela(self, tabela, converterEmDict=False):
+    def __tratar_tabela(self, tabela, converterEmDict=False):
         linhas_tabela = tabela.find_all("tr")
         resultado = []
         if converterEmDict:
@@ -121,11 +157,11 @@ class TabelaFipe():
         return resultado
 
 
-    def __obterValoresFipe(self):
+    def __obter_valores_fipe(self):
         tabela = self.__soup.find("table", {"class": "fipe-desktop"})
         if not tabela:
             return False
-        self.__consulta["tabela_fipe"]["valores"] = self.__tratarTabela(tabela)
+        self.__consulta["tabela_fipe"]["valores"] = self.__tratar_tabela(tabela)
         return True
 
 
@@ -133,74 +169,43 @@ class TabelaFipe():
         tabela = self.__soup.find("table", {"class": "placa-ipva"})
         if not tabela:
             return False
-        self.__consulta["tabela_fipe"]["valores_ipva"] = self.__tratarTabela(tabela, converterEmDict=True)
+        self.__consulta["tabela_fipe"]["valores_ipva"] = self.__tratar_tabela(tabela, converterEmDict=True)
         return True
 
 
-    def obterEstado(self, sigla):
-        estados = {
-            "AC": "ACRE",
-            "AL": "ALAGOAS",
-            "AP": "AMAPÁ",
-            "AM": "AMAZONAS",
-            "BA": "BAHIA",
-            "CE": "CEARÁ",
-            "DF": "DISTRITO FEDERAL",
-            "ES": "ESPÍRITO SANTO",
-            "GO": "GOIÁS",
-            "MA": "MARANHÃO",
-            "MT": "MATO GROSSO",
-            "MS": "MATO GROSSO DO SUL",
-            "MG": "MINAS GERAIS",
-            "PA": "PARÁ",
-            "PB": "PARAÍBA",
-            "PR": "PARANÁ",
-            "PE": "PERNAMBUCO",
-            "PI": "PIAUÍ",
-            "RJ": "RIO DE JANEIRO",
-            "RN": "RIO GRANDE DO NORTE",
-            "RS": "RIO GRANDE DO SUL",
-            "RO": "RONDÔNIA",
-            "RR": "RORAIMA",
-            "SC": "SANTA CATARINA",
-            "SP": "SÃO PAULO",
-            "SE": "SERGIPE",
-            "TO": "TOCANTINS"
-        }
-
-        return estados.get(sigla.upper())
+    def obter_estado(self, sigla):
+        return TabelaFipe.ESTADOS.get(sigla.upper())
 
 
-    def verificarPlacaMercosul(self, placa):
+    def verificar_placa_mercosul(self, placa):
         return placa[4].isalpha()
 
 
-    def converterPlaca(self, placa):
+    def converter_placa(self, placa):
         p = placa.lower()
-        if self.verificarPlacaMercosul(p):
+        if self.verificar_placa_mercosul(p):
             return f"{placa[:-3]}{str(ascii_lowercase.find(p[4]))}{placa[-2:]}".upper()
         else:
             return f"{placa[:-3]}{ascii_lowercase[int(p[4])]}{placa[-2:]}".upper()
 
 
     def consulta(self, placa):
-        self.__prepararConsulta(placa)
-        self.__obterPlacaFipeHtml()
-        self.__obterSoup()
-        self.__obterLogoUrl()
-        self.__obterDetalhes()
-        self.__corrigirParametros()
-        self.__obterValoresFipe()
+        self.__preparar_consulta(placa)
+        self.__obter_placa_fipe_html()
+        self.__obter_soup()
+        self.__obter_logo_url()
+        self.__obter_detalhes()
+        self.__tratar_parametros()
+        self.__obter_valores_fipe()
         self.__obterValoresIpva()
-        self.__consulta["detalhes"]["tipo_veiculo"] = self.__obterTipoVeiculo(self.__soup.find("h2").get_text().lower())
+        self.__consulta["detalhes"]["tipo_veiculo"] = self.__obter_tipo_veiculo(self.__soup.find("h2").get_text().lower())
         for p in self.__soup.find_all("p"):
             texto = p.get_text().lower()
             if "emitida pelo" in texto:
-                self.__consulta["orgao_emissor"] = self.__obterOrgaoEmissor(texto)
+                self.__consulta["orgao_emissor"] = self.__obter_orgao_emissor(texto)
             elif "registrados" in texto:
-                self.__consulta["veiculos_registrados"] = self.__obterVeiculosRegistrados(texto)
+                self.__consulta["veiculos_registrados"] = self.__obter_veiculos_registrados(texto)
             elif "tabela fipe de" in texto:
-                self.__consulta["tabela_fipe"]["data"] = self.__obterDataTabelaFipe(texto)
+                self.__consulta["tabela_fipe"]["data"] = self.__obter_data_tabela_fipe(texto)
                 self.__consulta["tabela_fipe"]["descricao"] = p.get_text()
-
         return self.__consulta

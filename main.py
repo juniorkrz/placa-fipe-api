@@ -1,4 +1,5 @@
 __version__ = "0.0.1"
+__author__ = "Júnior Krz"
 
 
 from fastapi import FastAPI
@@ -13,9 +14,17 @@ fipe = TabelaFipe()
 async def root():
     return {
                 "message": "Placa FIPE API Online!",
-                "author": "Júnior Krz",
+                "author": __author__,
                 "version": __version__
             }
+
+
+@app.get("/estado/{sigla}")
+async def estado(sigla):
+    return {
+            "status": True,
+            "result": fipe.obter_estado(sigla)
+        }
 
 
 @app.get("/consulta/{placa}")
@@ -26,17 +35,17 @@ async def consulta(placa):
         }
 
 
-@app.get("/mercosul/{placa}")
-async def consulta(placa):
+@app.get("/converter/{placa}")
+async def converter(placa):
     return {
             "status": True,
-            "result": fipe.verificarPlacaMercosul(placa)
+            "result": fipe.converter_placa(placa)
         }
 
 
-@app.get("/converter/{placa}")
-async def consulta(placa):
+@app.get("/mercosul/{placa}")
+async def mercosul(placa):
     return {
             "status": True,
-            "result": fipe.converterPlaca(placa)
+            "result": fipe.verificar_placa_mercosul(placa)
         }
