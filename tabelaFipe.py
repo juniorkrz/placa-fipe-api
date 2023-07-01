@@ -66,6 +66,10 @@ class TabelaFipe():
         return True
 
 
+    def __verificar_consulta(self):
+        return "não foi encontrada" not in self.__html.lower()
+
+
     def __obter_soup(self):
         self.__soup = BeautifulSoup(self.__html, "html.parser")
         return True
@@ -191,21 +195,22 @@ class TabelaFipe():
 
     def consulta(self, placa):
         self.__preparar_consulta(placa)
-        self.__obter_placa_fipe_html()
-        self.__obter_soup()
-        self.__obter_logo_url()
-        self.__obter_detalhes()
-        self.__tratar_parametros()
-        self.__obter_valores_fipe()
-        self.__obterValoresIpva()
-        self.__consulta["detalhes"]["tipo_veiculo"] = self.__obter_tipo_veiculo(self.__soup.find("h2").get_text().lower())
-        for p in self.__soup.find_all("p"):
-            texto = p.get_text().lower()
-            if "emitida pelo" in texto:
-                self.__consulta["orgao_emissor"] = self.__obter_orgao_emissor(texto)
-            elif "registrados" in texto:
-                self.__consulta["veiculos_registrados"] = self.__obter_veiculos_registrados(texto)
-            elif "tabela fipe de" in texto:
-                self.__consulta["tabela_fipe"]["data"] = self.__obter_data_tabela_fipe(texto)
-                self.__consulta["tabela_fipe"]["descricao"] = p.get_text()
-        return self.__consulta
+        if self.__obter_placa_fipe_html() and self.__verificar_consulta():
+            self.__obter_soup()
+            self.__obter_logo_url()
+            self.__obter_detalhes()
+            self.__tratar_parametros()
+            self.__obter_valores_fipe()
+            self.__obterValoresIpva()
+            self.__consulta["detalhes"]["tipo_veiculo"] = self.__obter_tipo_veiculo(self.__soup.find("h2").get_text().lower())
+            for p in self.__soup.find_all("p"):
+                texto = p.get_text().lower()
+                if "emitida pelo" in texto:
+                    self.__consulta["orgao_emissor"] = self.__obter_orgao_emissor(texto)
+                elif "registrados" in texto:
+                    self.__consulta["veiculos_registrados"] = self.__obter_veiculos_registrados(texto)
+                elif "tabela fipe de" in texto:
+                    self.__consulta["tabela_fipe"]["data"] = self.__obter_data_tabela_fipe(texto)
+                    self.__consulta["tabela_fipe"]["descricao"] = p.get_text()
+            return self.__consulta
+        return False
