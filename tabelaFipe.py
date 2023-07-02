@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 from string import ascii_lowercase
+from tokens import scraping_ant_tokens
 from requests import get as requests_get
+from random import choice as random_choice
 from urllib.parse import urlencode as urllib_url_encode
 
 
@@ -40,7 +42,6 @@ class TabelaFipe():
 
 
     def __init__(self) -> None:
-        self.__sa_token = 'SEU_TOKEN_AQUI' # Consiga o seu em https://scrapingant.com/ (1.000 consultas gratuitas por mês).
         self.__sa_api_url = 'https://api.scrapingant.com/v2/general'
         self.__placa_fipe_url = "https://placafipe.com/placa/%s"
 
@@ -57,7 +58,7 @@ class TabelaFipe():
 
     def __obter_placa_fipe_html(self):
         fipe_url = self.__placa_fipe_url % self.__placa
-        params = {'url': fipe_url, 'x-api-key': self.__sa_token}
+        params = {'url': fipe_url, 'x-api-key': random_choice(scraping_ant_tokens)}
         url = f'{self.__sa_api_url}?{urllib_url_encode(params)}'
         resposta = requests_get(url)
         if resposta.status_code != 200:
@@ -67,7 +68,14 @@ class TabelaFipe():
 
 
     def __verificar_consulta(self):
-        return "não foi encontrada" not in self.__html.lower()
+        frases_erro = [
+                        "tem um formato inválido",
+                        "não foi encontrada informação para a placa",
+                        ]
+        for frase in frases_erro:
+            if frase in self.__html.lower():
+                return False
+        return True
 
 
     def __obter_soup(self):
@@ -75,13 +83,23 @@ class TabelaFipe():
         return True
 
 
-    def __obter_logo_url(self):
-        logo = self.__soup.find("img", {"class": "fipeLogoDIV"})
-        if logo:
-            logo = logo.attrs["data-src"]
-            self.__consulta["logo_url"] = logo
+    def __obter_imagem_logo_url(self):
+        imagem_logo = self.__soup.find("img", {"class": "fipeLogoDIV"})
+        if imagem_logo:
+            imagem_logo_url = imagem_logo.attrs["data-src"]
+            self.__consulta["imagem_logo_url"] = imagem_logo_url
             return True
-        self.__consulta["logo_url"] = False
+        self.__consulta["imagem_logo_url"] = False
+        return False
+
+
+    def __obter_imagem_placa_url(self):
+        imagem_placa = self.__soup.find("img", {"class": "fipe-placa"})
+        if imagem_placa:
+            imagem_placa_url = imagem_placa.attrs["data-src"]
+            self.__consulta["imagem_placa_url"] = imagem_placa_url
+            return True
+        self.__consulta["imagem_placa_url"] = False
         return False
 
 
@@ -112,15 +130,9 @@ class TabelaFipe():
                 self.__consulta["detalhes"][p] = int(self.__consulta["detalhes"][p])
 
 
-    def __obter_veiculos_registrados(self, texto):
-        try:
-            return float(texto.split("registrados ")[1].split(" ")[0])
-        except:
-            return False
-
-
-    def __obter_tipo_veiculo(self, texto):
-        return texto.split(" ")[2].strip().lower()
+    def __obter_tipo_veiculo(self):
+        self.__consulta["detalhes"]["tipo_veiculo"] = self.__soup.find("h2").get_text().split(" ")[2].strip().lower()
+        return True
 
 
     def __obter_orgao_emissor(self, texto):
@@ -131,17 +143,35 @@ class TabelaFipe():
         return False
 
 
+    def __obter_veiculos_registrados(self, texto):
+        try:
+            return float(texto.split("registrados ")[1].split(" ")[0])
+        except:
+            return False
+
+
     def __obter_data_tabela_fipe(self, texto):
         return texto.split("fipe de ")[1].split(",")[0].strip().capitalize()
 
 
-    def __tratar_tabela(self, tabela, converterEmDict=False):
+    def __obter_outros_detalhes(self):
+        for p in self.__soup.find_all("p"):
+            texto = p.get_text().lower()
+            if "emitida pelo" in texto:
+                self.__consulta["orgao_emissor"] = self.__obter_orgao_emissor(texto)
+            elif "registrados" in texto:
+                self.__consulta["veiculos_registrados"] = self.__obter_veiculos_registrados(texto)
+            elif "tabela fipe de" in texto:
+                self.__consulta["tabela_fipe"]["data"] = self.__obter_data_tabela_fipe(texto)
+                self.__consulta["tabela_fipe"]["descricao"] = p.get_text()
+        return True
+
+
+    def __tratar_tabela(self, tabela, converter_em_dict=False):
         linhas_tabela = tabela.find_all("tr")
-        resultado = []
-        if converterEmDict:
-            resultado = {}
+        resultado = {} if converter_em_dict else []
         cabecalho_tabela = linhas_tabela[0]
-        parametros = [unidecode(parametro.get_text().replace(" ", "_").strip().lower()) for parametro in cabecalho_tabela.find_all("td")]   
+        parametros = [unidecode(parametro.get_text().replace(" ", "_").strip().lower()) for parametro in cabecalho_tabela.find_all("td")]
         linhas_tabela.pop(0)
         for linha in linhas_tabela:
             item = {}
@@ -152,9 +182,9 @@ class TabelaFipe():
                         valor = valor.find_next()
                 valor = valor.get_text()
                 item[parametro] = valor
-                if converterEmDict and len(item) == 1:
+                if converter_em_dict and len(item) == 1:
                     chave = valor
-            if converterEmDict:
+            if converter_em_dict:
                 resultado[chave] = item
             else:
                 resultado.append(item)
@@ -169,11 +199,11 @@ class TabelaFipe():
         return True
 
 
-    def __obterValoresIpva(self):
+    def __obter_valores_ipva(self):
         tabela = self.__soup.find("table", {"class": "placa-ipva"})
         if not tabela:
             return False
-        self.__consulta["tabela_fipe"]["valores_ipva"] = self.__tratar_tabela(tabela, converterEmDict=True)
+        self.__consulta["tabela_fipe"]["valores_ipva"] = self.__tratar_tabela(tabela, converter_em_dict=True)
         return True
 
 
@@ -182,7 +212,7 @@ class TabelaFipe():
 
 
     def verificar_placa_mercosul(self, placa):
-        return placa[4].isalpha()
+        return placa[4].isalpha() or placa[5].isalpha() 
 
 
     def converter_placa(self, placa):
@@ -197,20 +227,13 @@ class TabelaFipe():
         self.__preparar_consulta(placa)
         if self.__obter_placa_fipe_html() and self.__verificar_consulta():
             self.__obter_soup()
-            self.__obter_logo_url()
+            self.__obter_imagem_logo_url()
+            self.__obter_imagem_placa_url()
             self.__obter_detalhes()
             self.__tratar_parametros()
             self.__obter_valores_fipe()
-            self.__obterValoresIpva()
-            self.__consulta["detalhes"]["tipo_veiculo"] = self.__obter_tipo_veiculo(self.__soup.find("h2").get_text().lower())
-            for p in self.__soup.find_all("p"):
-                texto = p.get_text().lower()
-                if "emitida pelo" in texto:
-                    self.__consulta["orgao_emissor"] = self.__obter_orgao_emissor(texto)
-                elif "registrados" in texto:
-                    self.__consulta["veiculos_registrados"] = self.__obter_veiculos_registrados(texto)
-                elif "tabela fipe de" in texto:
-                    self.__consulta["tabela_fipe"]["data"] = self.__obter_data_tabela_fipe(texto)
-                    self.__consulta["tabela_fipe"]["descricao"] = p.get_text()
+            self.__obter_valores_ipva()
+            self.__obter_tipo_veiculo()
+            self.__obter_outros_detalhes()
             return self.__consulta
         return False
