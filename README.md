@@ -1,5 +1,5 @@
 # placa-fipe-api
-Consulta de veículos na Tabela FIPE usando a placa do veículo.
+Consulta de veículos na tabela FIPE com base na placa do veículo.
 
 ## Instalação do uvicorn
 
