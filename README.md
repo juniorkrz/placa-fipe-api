@@ -1,17 +1,22 @@
 # placa-fipe-api
 Consulta de veículos na tabela FIPE com base na placa do veículo.
 
-## Instalação do uvicorn
+## Instalação das dependências
 
 ```
-pip install "uvicorn[standard]"
-
+pip install -r requirements.txt
 ```
 
 ## Iniciar o servidor
 
 ```
-uvicorn main:app --host 0.0.0.0 --port 80
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+## Via Docker
+
+```
+docker build -t placa-fipe-api . && docker run -e FASTAPI_TOKEN=<insira_token_aqui> -p 8000:8000 placa-fipe-api
 ```
 
 ## Obtenha um API Token em ScrapingAnt

@@ -1,0 +1,6 @@
+uvicorn[standard]
+fastapi
+beautifulsoup4
+unidecode
+tokens
+requests
