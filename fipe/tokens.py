@@ -7,4 +7,4 @@ sa_tokens = getenv('SA_TOKENS')
 if not sa_tokens:
     raise ValueError("Token não encontrado. Certifique-se de definir a variável de ambiente SA_TOKENS. Obtenha o seu em https://scrapingant.com")
 
-scraping_ant_tokens = [token for token in sa_tokens.strip().split(",") if token]
+scraping_ant_tokens = [token.strip() for token in sa_tokens.split(",") if token]
