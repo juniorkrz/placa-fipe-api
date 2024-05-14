@@ -19,7 +19,7 @@ uvicorn fipe.main:app --host 0.0.0.0 --port 8000
 ## Via Docker
 
 ```
-docker run -e SA_TOKENS="token1,token2,token3" -p 8000:8000 juniorkrz/placa-fipe-api
+docker run --name placa-fipe-api -e SA_TOKENS="token1,token2,token3" -p 8000:8000 juniorkrz/placa-fipe-api
 ```
 
 Lembre-se de substituir `"token1,token2,token3"` pelos seus tokens reais, separados por vírgula. Você pode adicionar quantos tokens forem necessários.
