@@ -1,5 +1,5 @@
 __version__ = "0.0.3"
-__author__ = "Júnior Krz"
+__author__ = "Antônio Roberto Júnior"
 
 
 from fastapi import FastAPI
@@ -13,9 +13,10 @@ fipe = TabelaFipe()
 @app.get("/")
 async def root():
     return {
-                "message": "Placa FIPE API Online!",
                 "author": __author__,
-                "version": __version__
+                "version": __version__,
+                "message": "Placa FIPE API Online!",
+                "git": "https://github.com/juniorkrz/placa-fipe-api"
             }
 
 

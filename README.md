@@ -51,11 +51,12 @@ Converte a placa informada para o padrão Mercosul ou vice-versa.
 Verifica se a placa informada é do padrão Mercosul.
 
 ## Autor
-- Júnior Krz
+- [Antônio Roberto Júnior][krz]
 
 ## Licença
 
 Este projeto está licenciado sob a [MIT License][license].
 
+[krz]: https://github.com/juniorkrz
 [license]: https://github.com/juniorkrz/placa-fipe-api/blob/master/LICENSE
 [scrapingant]: https://scrapingant.com
