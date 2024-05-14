@@ -1,10 +1,12 @@
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 from string import ascii_lowercase
-from tokens import scraping_ant_tokens
 from requests import get as requests_get
 from random import choice as random_choice
 from urllib.parse import urlencode as urllib_url_encode
+
+
+from .tokens import scraping_ant_tokens
 
 
 class TabelaFipe():

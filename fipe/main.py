@@ -3,7 +3,9 @@ __author__ = "Antônio Roberto Júnior"
 
 
 from fastapi import FastAPI
-from tabelaFipe import TabelaFipe
+
+
+from .tabelaFipe import TabelaFipe
 
 
 app = FastAPI()
