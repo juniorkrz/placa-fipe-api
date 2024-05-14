@@ -1,15 +1,16 @@
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __author__ = "Antônio Roberto Júnior"
 
 
 from fastapi import FastAPI
+from placafipy import PlacaFipy
 
 
-from .tabelaFipe import TabelaFipe
+from .tokens import scraping_ant_tokens
 
 
 app = FastAPI()
-fipe = TabelaFipe()
+fipy = PlacaFipy(scraping_ant_tokens)
 
 
 @app.get("/")
@@ -26,7 +27,7 @@ async def root():
 async def estado(sigla):
     return {
             "status": True,
-            "result": fipe.obter_estado(sigla)
+            "result": fipy.obter_estado(sigla)
         }
 
 
@@ -34,7 +35,7 @@ async def estado(sigla):
 async def consulta(placa):
     return {
             "status": True,
-            "result": fipe.consulta(placa)
+            "result": fipy.consulta(placa)
         }
 
 
@@ -42,7 +43,7 @@ async def consulta(placa):
 async def converter(placa):
     return {
             "status": True,
-            "result": fipe.converter_placa(placa)
+            "result": fipy.converter_placa(placa)
         }
 
 
@@ -50,5 +51,5 @@ async def converter(placa):
 async def mercosul(placa):
     return {
             "status": True,
-            "result": fipe.verificar_placa_mercosul(placa)
+            "result": fipy.verificar_placa_mercosul(placa)
         }

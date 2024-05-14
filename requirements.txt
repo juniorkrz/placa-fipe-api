@@ -1,6 +1,3 @@
 uvicorn[standard]
-fastapi
-beautifulsoup4
-unidecode
-tokens
-requests
+fastapi==0.111.0
+PlacaFipy==1.0.0
