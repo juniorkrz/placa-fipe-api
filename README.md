@@ -1,6 +1,9 @@
 # placa-fipe-api
 Consulta de veículos na tabela FIPE com base na placa do veículo.
 
+## Obtenha um API Token em ScrapingAnt
+Crie uma conta em [ScrapingAnt][scrapingant] e obtenha um Token (1.000 consultas gratuitas por mês).
+
 ## Instalação das dependências
 
 ```
@@ -16,11 +19,10 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ## Via Docker
 
 ```
-docker build -t placa-fipe-api . && docker run -e FASTAPI_TOKEN=<insira_token_aqui> -p 8000:8000 placa-fipe-api
+docker build -t placa-fipe-api . && docker run -e SA_TOKENS="token1,token2,token3" -p 8000:8000 placa-fipe-api
 ```
 
-## Obtenha um API Token em ScrapingAnt
-Crie uma conta em [ScrapingAnt][scrapingant] e obtenha um Token (1.000 consultas gratuitas por mês).
+Lembre-se de substituir `"token1,token2,token3"` pelos seus tokens reais, separados por vírgula. Você pode adicionar quantos tokens forem necessários.
 
 ## Descrição
 Este projeto permite realizar consultas na FIPE utilizando a placa do veículo. Ele oferece as seguintes funcionalidades:
