@@ -1,5 +1,5 @@
 FROM python:alpine
-WORKDIR /usr/scr/app
+WORKDIR /usr/src/app
 COPY . .
 RUN pip install -r requirements.txt
 EXPOSE 8000
