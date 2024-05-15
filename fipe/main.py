@@ -1,9 +1,9 @@
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 __author__ = "Antônio Roberto Júnior"
 
 
 from fastapi import FastAPI
-from placafipy import PlacaFipy
+from placafipy import PlacaFipy, __version__ as fipy_version
 
 
 from .tokens import scraping_ant_tokens
@@ -17,7 +17,8 @@ fipy = PlacaFipy(scraping_ant_tokens)
 async def root():
     return {
                 "author": __author__,
-                "version": __version__,
+                "fipe_api_version": __version__,
+                "placafipy_version": fipy_version,
                 "message": "Placa FIPE API Online!",
                 "git": "https://github.com/juniorkrz/placa-fipe-api"
             }
