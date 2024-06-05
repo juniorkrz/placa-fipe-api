@@ -2,7 +2,12 @@
 Consulta de veículos na tabela FIPE com base na placa do veículo.
 
 ## Obtenha um API Token em ScrapingAnt
-Crie uma conta em [ScrapingAnt][scrapingant] e obtenha um Token (1.000 consultas gratuitas por mês).
+
+Para usar a placa-fipe-api, é necessário um token de API do ScrapingAnt para contornar verificações anti-webscraping.
+
+O ScrapingAnt fornece 1.000 consultas gratuitas por mês.
+
+Você pode criar uma conta em [ScrapingAnt][scrapingant] e obter seu token API lá.
 
 ## Instalação das dependências
 
